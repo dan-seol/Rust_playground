@@ -55,3 +55,5 @@ Rust enums can each hold values of different type
 
 Rust does not have null value
 as trying to use null like not null can cause great problems
+
+So it extensively uses Optional type implementation `Option<T>` as a enum!
