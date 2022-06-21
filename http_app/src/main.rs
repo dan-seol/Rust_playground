@@ -1,3 +1,10 @@
+use http::Method;
+use http::Request;
+use server::Server;
+
+mod http;
+mod server;
+
 fn main() {
     //String literal: str, String ?
     //let string = String::from("127.0.0.1:8081");
@@ -23,41 +30,6 @@ fn main() {
     server.run();
 }
 
-struct Server {
-    addr: String,
-
-}
-
-impl Server {
-    //methods -> similar to functions, but under the context of struct
-    fn new(addr: String) -> Self { //Alias for the name of the struct
-        Server {
-            addr
-        }
-    }
-
-    fn run(self) { //if not passed by ref, self deallocates
-        println!("Listening on {}", self.addr);
-    }
-}
-
-struct Request {
-    path: String,
-    query_string: Option<String>,
-    method: Method,
-}
-
-enum Method {
-    GET,
-    DELETE,
-    POST,
-    PUT,
-    HEAD,
-    CONNECT,
-    OPTIONS,
-    TRACE,
-    PATCH
-}
 
 /*
 GET /user?id=10 HTTP/1.1\r\n
