@@ -1,8 +1,19 @@
 use std::convert::TryFrom;
 use std::io::Read;
+use std::io::Write;
 use std::net::TcpListener;
-use crate::http::Request; //crate -> root of the entire project
+use crate::http::ParseError;
+use crate::http::{Request, Response, StatusCode}; //crate -> root of the entire project
 //read is trait
+
+pub trait Handler {
+    fn handle_request(&mut self, request: &Request) -> Response;
+
+    fn handle_bad_request(&mut self, e: &ParseError) -> Response {
+        println!("Failed to parse request: {}", e);
+        Response::new(StatusCode::BadRequest, None)
+    }
+}
 
 pub struct Server {
     addr: String
@@ -18,7 +29,7 @@ impl Server {
         Self { addr }
     } 
     
-    pub fn run(self) { //if not passed by ref, self deallocates
+    pub fn run(self, mut handler: impl Handler) { //if not passed by ref, self deallocates
         println!("Listening on {}", self.addr);
         //remark that the bind(...) returns a result of TcpListener
         // Result<T> type is the key of error handling logic in rust
@@ -82,9 +93,21 @@ impl Server {
                           //{:?} <- use debug implementation
                           println!("Received a request: {}", String::from_utf8_lossy(&buffer));
                           //&buffer as &[u8]
-                          match Request::try_from(&buffer[..]) {
-                              Ok(request) => {}
-                              Err(e) => println!("Failed to parse a request: {}", e)
+                          let response: Response = match Request::try_from(&buffer[..]) {
+                              Ok(request) => {
+                                handler.handle_request(&request)
+                                //dbg!(request);
+                                //Response::new(StatusCode::Ok, Some("<h1>IT WORKS!! </h1>".to_string()))
+                                //write!(stream, "{}", response);
+                            }
+                              Err(e) => {
+                                handler.handle_bad_request(&e)
+                                //println!("Failed to parse a request: {}", e);
+                                //Response::new(StatusCode::BadRequest, None)
+                             }
+                          };
+                          if let Err(e) = response.send(&mut stream) {
+                            println!("Failed to send response: {}", e)
                           }
                           //let res: &Result<Request, _> = &buffer[..].try_into();
                       },
